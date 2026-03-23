@@ -1,0 +1,96 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 데이터 불러오기
+df = pd.read_csv('성, 연령 및 가구주와의 관계별 인구.csv')
+
+# 연도별 남자/여자 일반가구원 수
+# '합계' (전체 일반가구원) 데이터만 필터링
+total_df = df[df['연령별'] == '합계']
+
+# 필요한 컬럼만 선택
+result = total_df[['시점', '남자', '여자']]
+
+# 연도 기준 정렬 (선택사항)
+result = result.sort_values(by='시점')
+
+# 그래프
+plt.figure()
+
+plt.plot(result['시점'], result['남자'], label='남자')
+plt.plot(result['시점'], result['여자'], label='여자')
+
+plt.xlabel('연도')
+plt.ylabel('인구수')
+plt.title('연도별 남자/여자 일반가구원 수')
+plt.legend()
+
+plt.show()
+
+# 연령별 일반가구원 통계(계, 남자, 여자 구분)
+# '합계' 제외 → 연령별 데이터만 추출
+age_df = df[df['연령별'] != '합계']
+
+# 원본 파일의 연령별 순서 유지
+age_order = df[df['연령별'] != '합계']['연령별'].drop_duplicates()
+age_df['연령별'] = pd.Categorical(age_df['연령별'], categories=age_order, ordered=True)
+
+# 피벗 테이블 생성 (전체 인구 기준)
+pivot_table = age_df.pivot_table(
+    index='연령별',
+    columns='시점',
+    values='계'
+).fillna(0).astype(int)
+
+# 성별 기준
+male_table = age_df.pivot_table(
+    index='연령별',
+    columns='시점',
+    values='남자'
+).fillna(0).astype(int)
+
+female_table = age_df.pivot_table(
+    index='연령별',
+    columns='시점',
+    values='여자'
+).fillna(0).astype(int)
+
+print("\n연령별 일반가구원 통계")
+print(pivot_table)
+
+print("\n남자")
+print(male_table)
+
+print("\n여자")
+print(female_table)
+
+# 연령별 남자/여자 일반가구원 수
+# 사용자에게 연도 입력 받기
+year = int(input("조회할 연도를 입력하세요 (예: 2020): "))
+
+# 해당 연도 데이터 필터링
+year_df = age_df[age_df['시점'] == year]
+
+# 데이터가 없는 경우 처리
+if year_df.empty:
+    print("해당 연도의 데이터가 없습니다.")
+else:
+    # 연령 숫자 기준 정렬
+    year_df['연령순'] = year_df['연령별'].str.extract(r'(\d+)').astype(int)
+    year_df = year_df.sort_values(by='연령순')
+
+    # 그래프 생성
+    plt.figure()
+
+    plt.plot(year_df['연령별'], year_df['남자'], marker='o', label='남자')
+    plt.plot(year_df['연령별'], year_df['여자'], marker='o', label='여자')
+
+    plt.xlabel('연령대')
+    plt.ylabel('인구수')
+    plt.title(f'{year}년 연령별 남자/여자 일반가구원 수')
+
+    plt.xticks(rotation=45)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
