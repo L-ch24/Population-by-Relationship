@@ -69,6 +69,12 @@ print(female_table)
 print("\n연령별 남자/여자 일반가구원 수")
 year = int(input("조회할 연도를 입력하세요 (예: 2020): "))
 
+# 연령대 제외
+exclude_ages = ['합계', '15~64세', '65세 이상']
+
+# 연령별 데이터 필터링
+age_df = df[~df['연령별'].isin(exclude_ages)].copy()
+
 # 해당 연도 데이터 필터링
 year_df = age_df[age_df['시점'] == year]
 
